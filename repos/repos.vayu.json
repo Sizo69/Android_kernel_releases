@@ -3,7 +3,7 @@
     "kernelSource": {
       "name": "Neo-Kernel",
       "repo": "https://github.com/Sizo69/kernel_vayu_Neo.git",
-      "branch": "kernelsu",
+      "branch": "main",
       "device": "vayu",
       "defconfig": "vayu_user_defconfig"
     },
