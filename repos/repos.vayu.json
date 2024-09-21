@@ -3,15 +3,15 @@
     "kernelSource": {
       "name": "Neo-Kernel",
       "repo": "https://github.com/Sizo69/kernel_vayu_Neo.git",
-      "branch": "main",
+      "branch": "kernelsu",
       "device": "vayu",
       "defconfig": "vayu_user_defconfig"
     },
-    "withKernelSU": false,
+    "withKernelSU": true,
     "toolchains": [
       {
-        "repo": "https://gitlab.com/clangsantoni/zyc_clang.git",
-        "branch": "18",
+        "repo": "https://gitlab.com/kuroringo901/clang-mandisa.git",
+        "branch": "uvite",
         "name": "clang",
         "binPath": ["bin"]
       },
