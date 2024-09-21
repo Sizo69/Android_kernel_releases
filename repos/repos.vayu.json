@@ -1,13 +1,13 @@
 [
   {
     "kernelSource": {
-      "name": "Perry-RED",
-      "repo": "https://github.com/Sizo69/kernel_perry.git",
-      "branch": "main",
+      "name": "Neo-Kernel",
+      "repo": "https://github.com/Sizo69/kernel_vayu_Neo.git",
+      "branch": "kernelsu",
       "device": "vayu",
       "defconfig": "vayu_user_defconfig"
     },
-    "withKernelSU": false,
+    "withKernelSU": true,
     "toolchains": [
       {
         "repo": "https://gitlab.com/clangsantoni/zyc_clang.git",
