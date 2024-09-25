@@ -1,7 +1,7 @@
 [
   {
     "kernelSource": {
-      "name": "Neo-Kernel",
+      "name": "Perry-GKI",
       "repo": "https://github.com/Sizo69/kernel_xiaomi_sm8475.git",
       "branch": "baalam",
       "device": "gki",
