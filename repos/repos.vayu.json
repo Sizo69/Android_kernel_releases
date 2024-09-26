@@ -1,11 +1,11 @@
 [
   {
     "kernelSource": {
-      "name": "Perry-GKI",
-      "repo": "https://github.com/Sizo69/kernel_xiaomi_sm8475.git",
-      "branch": "baalam",
-      "device": "gki",
-      "defconfig": "gki_defconfig"
+      "name": "AstraL-Kernel",
+      "repo": "https://github.com/Sizo69/kernel_vayu_AstraL.git",
+      "branch": "main",
+      "device": "vayu",
+      "defconfig": "vayu_defconfig"
     },
     "withKernelSU": true,
     "toolchains": [
