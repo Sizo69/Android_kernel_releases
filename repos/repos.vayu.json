@@ -2,10 +2,10 @@
   {
     "kernelSource": {
       "name": "AstraL-Kernel",
-      "repo": "https://github.com/AnymoreProject/kernel_xiaomi_vayu_upstream.git",
+      "repo": "https://github.com/Sizo69/kernel_vayu_AstraL.git",
       "branch": "main",
       "device": "vayu",
-      "defconfig": "vayu_defconfig"
+      "defconfig": "vayu_user_defconfig"
     },
     "withKernelSU": true,
     "toolchains": [
