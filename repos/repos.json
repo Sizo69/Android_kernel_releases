@@ -4,7 +4,7 @@
       "kernelSource": {
         "name": "Mondrian Kernel",
         "repo": "https://github.com/flakeforever/device_xiaomi_mondrian-kernel.git",
-        "branch": "main"
+        "branch": "udc"
       }
     },
     {
