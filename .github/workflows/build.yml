@@ -12,6 +12,12 @@ on:
       gki_branch:
         description: 'Branch to build from'
         required: true
+      compiler_repo:
+        description: 'Compiler repository URL'
+        required: true
+      anykernel_repo:
+        description: 'AnyKernel repository URL'
+        required: true
 
 jobs:
   build-gki:
@@ -23,15 +29,31 @@ jobs:
           repository: ${{ github.event.inputs.gki_repo }}
           ref: ${{ github.event.inputs.gki_branch }}
 
+      - name: Checkout Compiler Repo
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ github.event.inputs.compiler_repo }}
+          path: compiler
+
+      - name: Checkout AnyKernel Repo
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ github.event.inputs.anykernel_repo }}
+          path: anykernel
+
       - name: Set up the environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git ccache
+          sudo apt-get install -y build-essential git ccache libncurses-dev bison flex libssl-dev libelf-dev
 
       - name: Set up CCache
         run: |
           export CCACHE_DIR=$HOME/.ccache
           ccache -M 2G
+
+      - name: Clean previous build artifacts
+        run: |
+          rm -rf out/*
 
       - name: Configure Kernel
         run: |
@@ -39,14 +61,30 @@ jobs:
 
       - name: Compile Kernel
         run: |
-          make -j$(nproc) ARCH=arm64 O=out
+          make -j$(nproc) ARCH=arm64 O=out CROSS_COMPILE=compiler/bin/your-compiler-prefix- 2>&1 | tee build.log
 
       - name: Create Artifact
         run: |
           cp out/arch/arm64/boot/Image.gz out/kernel-gki-${{ github.event.inputs.kernel_version }}.img
 
+      - name: Prepare AnyKernel
+        run: |
+          cd anykernel
+          cp ../out/kernel-gki-${{ github.event.inputs.kernel_version }}.img .
+          # Any additional AnyKernel setup commands can be added here
+
+      - name: Create AnyKernel Package
+        run: |
+          zip -r ../kernel-gki-${{ github.event.inputs.kernel_version }}-anykernel.zip .
+        
       - name: Upload Kernel Artifact
         uses: actions/upload-artifact@v2
         with:
           name: kernel-gki-${{ github.event.inputs.kernel_version }}.img
           path: out/kernel-gki-${{ github.event.inputs.kernel_version }}.img
+
+      - name: Upload AnyKernel Package
+        uses: actions/upload-artifact@v2
+        with:
+          name: kernel-gki-${{ github.event.inputs.kernel_version }}-anykernel.zip
+          path: kernel-gki-${{ github.event.inputs.kernel_version }}-anykernel.zip
