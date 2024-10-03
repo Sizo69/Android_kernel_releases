@@ -2,15 +2,21 @@
   "kernel_repos": [
     {
       "url": "https://github.com/flakeforever/kernel_xiaomi_sm8475.git",
-      "branch": "baalam-rebase"
+      "branch": "baalam-rebase",
+      "description": "Kernel source for Xiaomi SM8475 (Poco X4 Pro) with custom features and optimizations.",
+      "depth": "1"
     },
     {
       "url": "https://github.com/flakeforever/device_xiaomi_mondrian-kernel.git",
-      "branch": "udc"
+      "branch": "udc",
+      "description": "Device-specific kernel for Xiaomi Mondrian with support for unique device features.",
+      "depth": "1"
     }
   ],
   "toolchain_repo": {
     "url": "https://gitlab.com/clangsantoni/zyc_clang.git",
-    "branch": "18" 
+    "branch": "18",
+    "description": "Clang toolchain optimized for building Android kernels.",
+    "depth": "1"
   }
 }
