@@ -30,7 +30,7 @@ jobs:
 
       - name: Load Repositories
         run: |
-          REPOS=$(cat repos.json)
+          REPOS=$(cat ./repos/repos.json)
           KERNEL_REPO=$(echo $REPOS | jq -r '.kernel_repo')
           KERNEL_BRANCH=$(echo $REPOS | jq -r '.kernel_branch')
           TOOLCHAIN_REPO=$(echo $REPOS | jq -r '.toolchain_repo')
@@ -48,7 +48,7 @@ jobs:
       - name: Set Kernel Configuration
         run: |
           cd gki_kernel
-          make O=out ARCH=arm64 <DEFCONFIG>
+          make O=out ARCH=arm64 gki_defconfig
 
       - name: Build Kernel
         run: |
