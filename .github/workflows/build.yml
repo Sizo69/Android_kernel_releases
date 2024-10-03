@@ -3,14 +3,30 @@ name: "Build GKI Kernel"
 on:
   workflow_dispatch:
     inputs:
+      kernel_repo_1:
+        description: "Enter the first kernel repo URL"
+        required: false
+        default: ""
+      kernel_branch_1:
+        description: "Enter the first kernel branch"
+        required: false
+        default: ""
+      kernel_repo_2:
+        description: "Enter the second kernel repo URL"
+        required: false
+        default: ""
+      kernel_branch_2:
+        description: "Enter the second kernel branch"
+        required: false
+        default: ""
       toolchain_repo:
         description: "Enter the toolchain repo URL"
-        required: true
-        default: "https://gitlab.com/clangsantoni/zyc_clang.git"
+        required: false
+        default: ""
       toolchain_branch:
         description: "Enter the toolchain branch"
-        required: true
-        default: "18"
+        required: false
+        default: ""
 
 jobs:
   build:
@@ -37,42 +53,64 @@ jobs:
             ccache \
             jq
 
-      - name: Load Repositories
+      - name: Clone First Kernel Source
         run: |
-          REPOS=$(cat ./repos/repos.json)
-          KERNEL_REPOS=$(echo $REPOS | jq -c '.kernel_repos[]')
+          KERNEL_REPO_1="${{ github.event.inputs.kernel_repo_1 }}"
+          KERNEL_BRANCH_1="${{ github.event.inputs.kernel_branch_1 }}"
+          if [ -z "$KERNEL_REPO_1" ] || [ -z "$KERNEL_BRANCH_1" ]; then
+            echo "First kernel repo and branch not provided."
+            exit 1
+          fi
+          echo "Cloning First Kernel Repo: $KERNEL_REPO_1, Branch: $KERNEL_BRANCH_1"
+          git clone --depth=1 --branch $KERNEL_BRANCH_1 $KERNEL_REPO_1 gki_kernel_1 || exit 1
 
-      - name: Clone Kernel Sources
+      - name: Clone Second Kernel Source
         run: |
-          for repo in $KERNEL_REPOS; do
-            KERNEL_REPO=$(echo $repo | jq -r '.url')
-            KERNEL_BRANCH=$(echo $repo | jq -r '.branch')
-            echo "Cloning Kernel Repo: $KERNEL_REPO, Branch: $KERNEL_BRANCH"
-            git clone --depth=1 --branch $KERNEL_BRANCH $KERNEL_REPO gki_kernel || exit 1
-          done
+          KERNEL_REPO_2="${{ github.event.inputs.kernel_repo_2 }}"
+          KERNEL_BRANCH_2="${{ github.event.inputs.kernel_branch_2 }}"
+          if [ -z "$KERNEL_REPO_2" ] || [ -z "$KERNEL_BRANCH_2" ]; then
+            echo "Second kernel repo and branch not provided."
+            exit 1
+          fi
+          echo "Cloning Second Kernel Repo: $KERNEL_REPO_2, Branch: $KERNEL_BRANCH_2"
+          git clone --depth=1 --branch $KERNEL_BRANCH_2 $KERNEL_REPO_2 gki_kernel_2 || exit 1
 
-      - name: Verify Kernel Source
-        run: ls -l gki_kernel
+      - name: Verify Kernel Sources
+        run: |
+          echo "Contents of first kernel directory:"
+          ls -l gki_kernel_1
+          echo "Contents of second kernel directory:"
+          ls -l gki_kernel_2
 
       - name: Set up Toolchain
         run: |
           TOOLCHAIN_REPO="${{ github.event.inputs.toolchain_repo }}"
           TOOLCHAIN_BRANCH="${{ github.event.inputs.toolchain_branch }}"
+          if [ -z "$TOOLCHAIN_REPO" ] || [ -z "$TOOLCHAIN_BRANCH" ]; then
+            echo "Toolchain repo and branch not provided."
+            exit 1
+          fi
           git clone --depth=1 --branch $TOOLCHAIN_BRANCH $TOOLCHAIN_REPO toolchain || exit 1
           echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
 
       - name: Set Kernel Configuration
         run: |
-          cd gki_kernel
+          cd gki_kernel_1
+          make O=out ARCH=arm64 gki_defconfig
+          cd ../gki_kernel_2
           make O=out ARCH=arm64 gki_defconfig
 
       - name: Build Kernel
         run: |
-          cd gki_kernel
+          cd gki_kernel_1
+          make O=out ARCH=arm64 -j$(nproc)
+          cd ../gki_kernel_2
           make O=out ARCH=arm64 -j$(nproc)
 
-      - name: Upload Kernel Image
+      - name: Upload Kernel Images
         uses: actions/upload-artifact@v3
         with:
-          name: kernel-image
-          path: gki_kernel/out/arch/arm64/boot/Image
+          name: kernel-images
+          path: |
+            gki_kernel_1/out/arch/arm64/boot/Image
+            gki_kernel_2/out/arch/arm64/boot/Image
