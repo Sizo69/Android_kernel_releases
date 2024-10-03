@@ -28,14 +28,12 @@ jobs:
             ccache \
             jq
 
-      - name: Load Repositories
+      - name: Load Repositories from repos.json
         run: |
           REPOS=$(cat ./repos/repos.json)
           KERNEL_REPOS=$(echo $REPOS | jq -c '.kernel_repos[]')
           TOOLCHAIN_REPO=$(echo $REPOS | jq -r '.toolchain_repo.url')
           TOOLCHAIN_BRANCH=$(echo $REPOS | jq -r '.toolchain_repo.branch')
-          echo "Toolchain Repo: $TOOLCHAIN_REPO"
-          echo "Toolchain Branch: $TOOLCHAIN_BRANCH"
 
       - name: Clone Kernel Sources
         run: |
@@ -48,7 +46,6 @@ jobs:
 
       - name: Set up Toolchain
         run: |
-          echo "Cloning Toolchain Repo: $TOOLCHAIN_REPO, Branch: $TOOLCHAIN_BRANCH"
           git clone --depth=1 --branch $TOOLCHAIN_BRANCH $TOOLCHAIN_REPO toolchain
           echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
 
