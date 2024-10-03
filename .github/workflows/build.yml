@@ -36,6 +36,13 @@ jobs:
           TOOLCHAIN_REPO=$(echo $REPOS | jq -r '.toolchain_repo')
           TOOLCHAIN_BRANCH=$(echo $REPOS | jq -r '.toolchain_branch')
 
+      - name: Debug Repository Values
+        run: |
+          echo "Kernel Repo: $KERNEL_REPO"
+          echo "Kernel Branch: $KERNEL_BRANCH"
+          echo "Toolchain Repo: $TOOLCHAIN_REPO"
+          echo "Toolchain Branch: $TOOLCHAIN_BRANCH"
+
       - name: Clone Kernel Source
         run: |
           git clone --depth=1 --branch $KERNEL_BRANCH $KERNEL_REPO gki_kernel
