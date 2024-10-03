@@ -4,11 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       toolchain_repo:
-        description: 'Enter the Toolchain Repository URL'
+        description: "Enter the toolchain repo URL"
         required: true
+        default: "https://gitlab.com/clangsantoni/zyc_clang.git"
       toolchain_branch:
-        description: 'Enter the Toolchain Branch'
+        description: "Enter the toolchain branch"
         required: true
+        default: "18"
 
 jobs:
   build:
@@ -35,7 +37,7 @@ jobs:
             ccache \
             jq
 
-      - name: Load Repositories from repos.json
+      - name: Load Repositories
         run: |
           REPOS=$(cat ./repos/repos.json)
           KERNEL_REPOS=$(echo $REPOS | jq -c '.kernel_repos[]')
@@ -46,15 +48,17 @@ jobs:
             KERNEL_REPO=$(echo $repo | jq -r '.url')
             KERNEL_BRANCH=$(echo $repo | jq -r '.branch')
             echo "Cloning Kernel Repo: $KERNEL_REPO, Branch: $KERNEL_BRANCH"
-            git clone --depth=1 --branch $KERNEL_BRANCH $KERNEL_REPO gki_kernel
+            git clone --depth=1 --branch $KERNEL_BRANCH $KERNEL_REPO gki_kernel || exit 1
           done
 
-      - name: Clone Toolchain
+      - name: Verify Kernel Source
+        run: ls -l gki_kernel
+
+      - name: Set up Toolchain
         run: |
-          TOOLCHAIN_REPO=${{ github.event.inputs.toolchain_repo }}
-          TOOLCHAIN_BRANCH=${{ github.event.inputs.toolchain_branch }}
-          echo "Cloning Toolchain Repo: $TOOLCHAIN_REPO, Branch: $TOOLCHAIN_BRANCH"
-          git clone --depth=1 --branch $TOOLCHAIN_BRANCH $TOOLCHAIN_REPO toolchain
+          TOOLCHAIN_REPO="${{ github.event.inputs.toolchain_repo }}"
+          TOOLCHAIN_BRANCH="${{ github.event.inputs.toolchain_branch }}"
+          git clone --depth=1 --branch $TOOLCHAIN_BRANCH $TOOLCHAIN_REPO toolchain || exit 1
           echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
 
       - name: Set Kernel Configuration
