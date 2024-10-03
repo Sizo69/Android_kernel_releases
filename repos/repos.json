@@ -1,18 +1,16 @@
-[
-  [
+{
+  "kernel_repos": [
     {
-      "kernelSource": {
-        "name": "Mondrian Kernel",
-        "repo": "https://github.com/flakeforever/device_xiaomi_mondrian-kernel.git",
-        "branch": "udc"
-      }
+      "url": "https://github.com/flakeforever/kernel_xiaomi_sm8475.git",
+      "branch": "baalam-rebase"
     },
     {
-      "kernelSource": {
-        "name": "SM8475 Kernel",
-        "repo": "https://github.com/flakeforever/kernel_xiaomi_sm8475.git",
-        "branch": "baalam-rebase"
-      }
+      "url": "https://github.com/flakeforever/device_xiaomi_mondrian-kernel.git",
+      "branch": "udc"
     }
-  ]
-]
+  ],
+  "toolchain_repo": {
+    "url": "https://gitlab.com/clangsantoni/zyc_clang.git",
+    "branch": "18" 
+  }
+}
