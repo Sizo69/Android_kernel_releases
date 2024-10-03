@@ -35,6 +35,11 @@ jobs:
           TOOLCHAIN_REPO=$(echo $REPOS | jq -r '.toolchain_repo.url')
           TOOLCHAIN_BRANCH=$(echo $REPOS | jq -r '.toolchain_repo.branch')
 
+      - name: Debug Toolchain Variables
+        run: |
+          echo "Toolchain Repository: $TOOLCHAIN_REPO"
+          echo "Toolchain Branch: $TOOLCHAIN_BRANCH"
+
       - name: Clone Kernel Sources
         run: |
           for repo in $KERNEL_REPOS; do
@@ -46,6 +51,7 @@ jobs:
 
       - name: Set up Toolchain
         run: |
+          echo "Cloning Toolchain Repo: $TOOLCHAIN_REPO, Branch: $TOOLCHAIN_BRANCH"
           git clone --depth=1 --branch $TOOLCHAIN_BRANCH $TOOLCHAIN_REPO toolchain
           echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
 
