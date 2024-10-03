@@ -1,0 +1,103 @@
+name: "Build kernels for GKI"
+
+env:
+  OUT_DIR: "${{ github.workspace }}/out"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Set-repos:
+    name: "🐂 Parse repos.json"
+    runs-on: ubuntu-latest
+    outputs:
+      repos: ${{ steps.generate-matrix.outputs.repos }}
+      builddate: ${{ steps.generate-builddate.outputs.builddate }}
+    steps:
+      - name: "😄 Checkout"
+        uses: actions/checkout@v3
+
+      - name: "😆 Generate Matrix"
+        id: generate-matrix
+        run: |
+          echo "repos<<EOF" >> $GITHUB_OUTPUT
+          jq -s '[.[][]]' repos/repos*.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: "⏰ Set builddate"
+        id: generate-builddate
+        run: echo "builddate=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+  Build-Kernel:
+    name: "🐎 Build GKI kernel"
+    runs-on: ubuntu-latest
+    needs:
+      - Set-repos
+    strategy:
+      max-parallel: 4
+      fail-fast: false
+      matrix:
+        repos: ${{ fromJSON(needs.Set-repos.outputs.repos) }}
+    env:
+      WORKSPACE: ${{ github.workspace }}
+      builddate: "${{ needs.Set-repos.outputs.builddate }}"
+
+      KERNEL_NAME: ${{ matrix.repos.kernelSource.name }}
+      KERNEL_REPO: ${{ matrix.repos.kernelSource.repo }}
+      KERNEL_BRANCH: ${{ matrix.repos.kernelSource.branch }}
+
+      DEFCONFIG_NAME: "gki_defconfig"  # Use GKI-specific defconfig
+
+      GKI_DIR: "${{ github.workspace }}/gki"  # Output directory for GKI-specific files
+      USE_GKI: true  # Flag to handle GKI-specific steps
+
+    steps:
+      - name: "⭐ Install prerequisites"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential bc gcc-aarch64-linux-gnu lld gcc-arm-linux-gnueabi libssl-dev libfl-dev
+          sudo apt-get install -y curl git ftp lftp wget libarchive-tools ccache python2 python2-dev
+          sudo apt-get install -y zip unzip tar gzip bzip2 rar unrar
+
+      - name: "🌟 Clone kernel source => (${{ env.KERNEL_REPO }})"
+        run: |
+          git clone --recursive --depth=1 -j $(nproc) --branch $KERNEL_BRANCH $KERNEL_REPO $KERNEL_NAME
+
+      - name: "💫 Get GKI Toolchains"
+        run: |
+          git clone --depth=1 https://android.googlesource.com/kernel/prebuilts/clang/host/linux-x86 clang
+          export PATH=$WORKSPACE/clang/bin:$PATH
+
+      - name: "🔢 Extract kernel version"
+        working-directory: ${{ env.KERNEL_NAME }}
+        run: |
+          kernel_version=$(grep "^VERSION = " Makefile | cut -d ' ' -f 3)
+          patchlevel=$(grep "^PATCHLEVEL = " Makefile | cut -d ' ' -f 3)
+          sublevel=$(grep "^SUBLEVEL = " Makefile | cut -d ' ' -f 3)
+          local_kernel_version="${kernel_version}.${patchlevel}.${sublevel}"
+          echo "Kernel Version: $local_kernel_version"
+          echo "KERNEL_VERSION=${local_kernel_version}" >> $GITHUB_ENV
+
+      - name: "👍 Make GKI defconfig"
+        working-directory: ${{ env.KERNEL_NAME }}
+        run: |
+          make O=${{ env.OUT_DIR }} ${DEFCONFIG_NAME}
+
+      - name: "🎶 Build GKI kernel => (${{ env.KERNEL_NAME }})"
+        working-directory: ${{ env.KERNEL_NAME }}
+        run: |
+          make O=${{ env.OUT_DIR }} -j$(nproc) Image.gz modules
+
+      - name: "💛 Upload GKI Image"
+        uses: actions/upload-artifact@v3
+        with:
+          name: "GKI-Image-${{ env.KERNEL_NAME }}"
+          path: ${{ env.OUT_DIR }}/arch/arm64/boot/Image.gz
+          if-no-files-found: ignore
+
+      - name: "💜 Upload GKI dtb"
+        uses: actions/upload-artifact@v3
+        with:
+          name: "GKI-dtb-${{ env.KERNEL_NAME }}"
+          path: ${{ env.OUT_DIR }}/arch/arm64/boot/dtb.img
+          if-no-files-found: ignore
