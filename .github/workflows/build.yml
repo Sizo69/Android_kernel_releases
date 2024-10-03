@@ -25,15 +25,24 @@ jobs:
             flex \
             libncurses5-dev \
             libncursesw5-dev \
-            ccache
+            ccache \
+            jq
+
+      - name: Load Repositories
+        run: |
+          REPOS=$(cat repos.json)
+          KERNEL_REPO=$(echo $REPOS | jq -r '.kernel_repo')
+          KERNEL_BRANCH=$(echo $REPOS | jq -r '.kernel_branch')
+          TOOLCHAIN_REPO=$(echo $REPOS | jq -r '.toolchain_repo')
+          TOOLCHAIN_BRANCH=$(echo $REPOS | jq -r '.toolchain_branch')
 
       - name: Clone Kernel Source
         run: |
-          git clone --depth=1 --branch <KERNEL_BRANCH> <KERNEL_REPO> gki_kernel
+          git clone --depth=1 --branch $KERNEL_BRANCH $KERNEL_REPO gki_kernel
 
       - name: Set up Toolchain
         run: |
-          git clone --depth=1 --branch <TOOLCHAIN_BRANCH> <TOOLCHAIN_REPO> toolchain
+          git clone --depth=1 --branch $TOOLCHAIN_BRANCH $TOOLCHAIN_REPO toolchain
           echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
 
       - name: Set Kernel Configuration
