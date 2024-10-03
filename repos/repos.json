@@ -1,0 +1,18 @@
+[
+  [
+    {
+      "kernelSource": {
+        "name": "Mondrian Kernel",
+        "repo": "https://github.com/flakeforever/device_xiaomi_mondrian-kernel.git",
+        "branch": "main"
+      }
+    },
+    {
+      "kernelSource": {
+        "name": "SM8475 Kernel",
+        "repo": "https://github.com/flakeforever/kernel_xiaomi_sm8475.git",
+        "branch": "baalam-rebase"
+      }
+    }
+  ]
+]
