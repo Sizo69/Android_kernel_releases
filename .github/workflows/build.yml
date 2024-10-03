@@ -31,21 +31,18 @@ jobs:
       - name: Load Repositories
         run: |
           REPOS=$(cat ./repos/repos.json)
-          KERNEL_REPO=$(echo $REPOS | jq -r '.kernel_repo')
-          KERNEL_BRANCH=$(echo $REPOS | jq -r '.kernel_branch')
-          TOOLCHAIN_REPO=$(echo $REPOS | jq -r '.toolchain_repo')
-          TOOLCHAIN_BRANCH=$(echo $REPOS | jq -r '.toolchain_branch')
+          KERNEL_REPOS=$(echo $REPOS | jq -c '.kernel_repos[]')
+          TOOLCHAIN_REPO=$(echo $REPOS | jq -r '.toolchain_repo.url')
+          TOOLCHAIN_BRANCH=$(echo $REPOS | jq -r '.toolchain_repo.branch')
 
-      - name: Debug Repository Values
+      - name: Clone Kernel Sources
         run: |
-          echo "Kernel Repo: $KERNEL_REPO"
-          echo "Kernel Branch: $KERNEL_BRANCH"
-          echo "Toolchain Repo: $TOOLCHAIN_REPO"
-          echo "Toolchain Branch: $TOOLCHAIN_BRANCH"
-
-      - name: Clone Kernel Source
-        run: |
-          git clone --depth=1 --branch $KERNEL_BRANCH $KERNEL_REPO gki_kernel
+          for repo in $KERNEL_REPOS; do
+            KERNEL_REPO=$(echo $repo | jq -r '.url')
+            KERNEL_BRANCH=$(echo $repo | jq -r '.branch')
+            echo "Cloning Kernel Repo: $KERNEL_REPO, Branch: $KERNEL_BRANCH"
+            git clone --depth=1 --branch $KERNEL_BRANCH $KERNEL_REPO gki_kernel
+          done
 
       - name: Set up Toolchain
         run: |
