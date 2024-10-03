@@ -2,6 +2,13 @@ name: "Build GKI Kernel"
 
 on:
   workflow_dispatch:
+    inputs:
+      toolchain_repo:
+        description: 'Enter the Toolchain Repository URL'
+        required: true
+      toolchain_branch:
+        description: 'Enter the Toolchain Branch'
+        required: true
 
 jobs:
   build:
@@ -32,8 +39,6 @@ jobs:
         run: |
           REPOS=$(cat ./repos/repos.json)
           KERNEL_REPOS=$(echo $REPOS | jq -c '.kernel_repos[]')
-          TOOLCHAIN_REPO=$(echo $REPOS | jq -r '.toolchain_repo.url')
-          TOOLCHAIN_BRANCH=$(echo $REPOS | jq -r '.toolchain_repo.branch')
 
       - name: Clone Kernel Sources
         run: |
@@ -44,8 +49,11 @@ jobs:
             git clone --depth=1 --branch $KERNEL_BRANCH $KERNEL_REPO gki_kernel
           done
 
-      - name: Set up Toolchain
+      - name: Clone Toolchain
         run: |
+          TOOLCHAIN_REPO=${{ github.event.inputs.toolchain_repo }}
+          TOOLCHAIN_BRANCH=${{ github.event.inputs.toolchain_branch }}
+          echo "Cloning Toolchain Repo: $TOOLCHAIN_REPO, Branch: $TOOLCHAIN_BRANCH"
           git clone --depth=1 --branch $TOOLCHAIN_BRANCH $TOOLCHAIN_REPO toolchain
           echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
 
