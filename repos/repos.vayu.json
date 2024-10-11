@@ -3,7 +3,7 @@
     "kernelSource": {
       "name": "Kenzo Pak OVRE",
       "repo": "https://github.com/Sizo69/kernel_xiaomi_kenzo.git",
-      "branch": "Optimus-Kernel-v2",
+      "branch": "Optimus-Kernel",
       "device": "kenzo",
       "defconfig": "kenzo_defconfig"
     },
