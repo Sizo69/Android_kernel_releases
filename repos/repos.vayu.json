@@ -2,7 +2,7 @@
   {
     "kernelSource": {
       "name": "JiggleBits",
-      "repo": "https://github.com/Sizo69/kernel_xiaomi_kenzo.git",
+      "repo": "https://github.com/Dheeraj3031A/kernel_xiaomi_kenzo.git",
       "branch": "Optimus-Kernel",
       "device": "kenzo",
       "defconfig": "kenzo_defconfig"
