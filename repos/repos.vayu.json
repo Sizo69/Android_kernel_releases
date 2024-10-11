@@ -1,11 +1,11 @@
 [
   {
     "kernelSource": {
-      "name": "AstraL-Kernel",
-      "repo": "https://github.com/flakeforever/kernel_xiaomi_sm8475.git",
-      "branch": "baalam-rebase",
-      "device": "gki",
-      "defconfig": "gki_defconfig"
+      "name": "Kenzo Pak OVRE",
+      "repo": "https://github.com/Dheeraj3031A/kernel_xiaomi_kenzo.git",
+      "branch": "Optimus-Kernel-v2",
+      "device": "kenzo",
+      "defconfig": "kenzo_defconfig"
     },
     "withKernelSU": true,
     "toolchains": [
