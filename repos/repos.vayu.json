@@ -1,7 +1,7 @@
 [
   {
     "kernelSource": {
-      "name": "Kenzo Pak OVRE",
+      "name": "JiggleBits",
       "repo": "https://github.com/Sizo69/kernel_xiaomi_kenzo.git",
       "branch": "Optimus-Kernel",
       "device": "kenzo",
