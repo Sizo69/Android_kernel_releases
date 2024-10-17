@@ -1,13 +1,13 @@
 [
   {
     "kernelSource": {
-      "name": "JiggleBits",
-      "repo": "https://github.com/Dheeraj3031A/kernel_xiaomi_kenzo.git",
-      "branch": "Optimus-Kernel",
-      "device": "kenzo",
-      "defconfig": "kenzo_defconfig"
+      "name": "Baalam",
+      "repo": "https://github.com/Sizo69/kernel_AstraL_mondrian.git",
+      "branch": "main",
+      "device": "mondrian",
+      "defconfig": "gki_defconfig vendor/mondrian_defconfig"
     },
-    "withKernelSU": true,
+    "withKernelSU": false,
     "toolchains": [
       {
         "repo": "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9",
