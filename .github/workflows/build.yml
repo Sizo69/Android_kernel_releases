@@ -207,38 +207,35 @@ jobs:
 
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
 
-          echo -e "CONFIG_KPROBES=y\nCONFIG_FUNCTION_TRACER=y\nCONFIG_EVENT_TRACER=y\nCONFIG_FTRACE=y\nCONFIG_UPROBES=y\nCONFIG_KPROBE_EVENTS=y" >> .config
+          echo -e "Update KernelSU: ${{ env.KERNEL_NAME }}\n"
 
-      - name: "🔧 Build Kernel"
+      - name: "🌟 Build Kernel"
         working-directory: ${{ env.KERNEL_NAME }}
         run: |
-          eval ${{ steps.generate-args.outputs.args }}
-          make $DEFCONFIG_NAME
-          make $args
+          echo "🤔 Start building kernel..."
+          eval "${{ steps.generate-args.outputs.args }}"
+          make ${args} ${DEFCONFIG_NAME}
+
+      - name: "🌟 Build DLKM and create boot image"
+        if: ${{ matrix.repos.DLKM_and_Ramdisk.use == true }}
+        working-directory: ${{ env.KERNEL_NAME }}
+        run: |
+          # Create DLKM image
+          eval "${{ toJSON(matrix.repos.kernelSource.DLKM_and_Ramdisk.commands) }}"
 
       - name: "📦 Create Kernel Zip"
-        working-directory: ${{ env.KERNEL_NAME }}
+        if: ${{ env.useAnykernel == 'true' }}
         run: |
-          if [ ! -d "AnyKernel3" ]; then
-            echo "AnyKernel3 not found"
-            exit 1
-          fi
           cd AnyKernel3
-          mkdir -p ramdisk
-          mkdir -p dlkm
+          cp -r ${{ env.OUT_DIR }}/arch/arm/boot/zImage ramdisk/
+          cp -r ${{ env.OUT_DIR }}/arch/arm64/boot/Image ramdisk/
+          cp -r ${{ env.OUT_DIR }}/out/dlkm/* dlkm/
+          zip -r9 ${KERNEL_NAME}-${{ env.KERNEL_VERSION }}-${{ github.run_id }}.zip *
+          echo "🤔 Kernel zip created."
 
-          # Add ramdisk
-          cp -r $WORKSPACE/${{ env.KERNEL_NAME }}/arch/arm/boot/zImage ramdisk/
-          cp -r $WORKSPACE/${{ env.KERNEL_NAME }}/out/arch/arm/boot/zImage ramdisk/
-
-          # Add DLKM files
-          cp -r $WORKSPACE/${{ env.KERNEL_NAME }}/out/dlkm/* dlkm/
-
-          # Create the zip
-          zip -r9 ${KERNEL_NAME}-${KERNEL_DEVICE}-${builddate}.zip ramdisk/* dlkm/*
-
-      - name: "🏁 Upload Kernel Zip"
+      - name: "📤 Upload Kernel Zip"
+        if: ${{ env.useAnykernel == 'true' }}
         uses: actions/upload-artifact@v3
         with:
-          name: "${{ env.KERNEL_NAME }}-${{ env.KERNEL_DEVICE }}-${{ env.builddate }}.zip"
-          path: "AnyKernel3/${{ env.KERNEL_NAME }}-${{ env.KERNEL_DEVICE }}-${{ env.builddate }}.zip"
+          name: "kernel-${{ env.KERNEL_NAME }}-${{ github.run_id }}"
+          path: "AnyKernel3/*.zip"
