@@ -113,10 +113,8 @@ jobs:
           echo "🤔 There is $toolchains_num defined toolchains."
           for ((i=0;i<toolchains_num;i++)); do
             toolchain_name=$(echo $toolchains | jq -r ".[$i].name")
-            # Github
             toolchain_repo=$(echo $toolchains | jq -r ".[$i].repo")
             toolchain_branch=$(echo $toolchains | jq -r ".[$i].branch")
-            # From archive
             toolchain_url=$(echo $toolchains | jq -r ".[$i].url")
             
             echo $toolchain_url
@@ -209,136 +207,38 @@ jobs:
 
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
 
+          echo -e "CONFIG_KPROBES=y\nCONFIG_FUNCTION_TRACER=y\nCONFIG_EVENT_TRACER=y\nCONFIG_FTRACE=y\nCONFIG_UPROBES=y\nCONFIG_KPROBE_EVENTS=y" >> .config
 
-          echo -e "CONFIG_KPROBES=y" >> arch/${{ env.arch }}/configs/${{ env.DEFCONFIG_NAME }}
-          echo -e "CONFIG_HAVE_KPROBES=y" >> arch/${{ env.arch }}/configs/${{ env.DEFCONFIG_NAME }}
-          echo -e "CONFIG_KPROBE_EVENTS=y" >> arch/${{ env.arch }}/configs/${{ env.DEFCONFIG_NAME }}
-
-          cat arch/${{ env.arch }}/configs/${{ env.DEFCONFIG_NAME }}
-
-      - name: "👍 Make defconfig"
+      - name: "🔧 Build Kernel"
         working-directory: ${{ env.KERNEL_NAME }}
-        env:
-          args: ${{ steps.generate-args.outputs.args }}
-          arch: ${{ steps.generate-args.outputs.ARCH }}
         run: |
-          echo "PATH Variable: $PATH"
-          make ${{ env.args }} ${{ env.DEFCONFIG_NAME }}
+          eval ${{ steps.generate-args.outputs.args }}
+          make $DEFCONFIG_NAME
+          make $args
 
-      - name: "🔡 Generate name for files and artifacts"
-        run: |
-          echo "GITHUB_RELEASE_TAG=${{ github.run_number }}.v${{ env.KERNEL_VERSION }}.${{ env.KERNEL_NAME }}.${{ env.KERNEL_DEVICE }}.${{ env.builddate }}" >> $GITHUB_ENV
-          if [ "${{ env.withKernelSU }}" == "true" ]; then
-            echo "GITHUB_RELEASE_TITLE=${{ env.KERNEL_NAME }} v${{ env.KERNEL_VERSION }} for ${{ env.KERNEL_DEVICE }} with KernelSU | Build Date ${{ env.builddate }} | Build Number ${{ github.run_number }}" >> $GITHUB_ENV
-            echo "KERNEL_ZIP_NAME=${{ env.KERNEL_NAME }}_v${{ env.KERNEL_VERSION }}-${{ env.KERNEL_DEVICE }}-KernelSU-${{ env.builddate }}-Build_${{ github.run_number }}" >> $GITHUB_ENV
-          else
-            echo "GITHUB_RELEASE_TITLE=${{ env.KERNEL_NAME }} v${{ env.KERNEL_VERSION }} for ${{ env.KERNEL_DEVICE }} | Build Date ${{ env.builddate }} | Build Number ${{ github.run_number }}" >> $GITHUB_ENV
-            echo "KERNEL_ZIP_NAME=${{ env.KERNEL_NAME }}_v${{ env.KERNEL_VERSION }}-${{ env.KERNEL_DEVICE }}-${{ env.builddate }}-Build_${{ github.run_number }}" >> $GITHUB_ENV
-          fi
-
-      - name: "🎶 Build kernel => (${{ env.GITHUB_RELEASE_TITLE }})"
+      - name: "📦 Create Kernel Zip"
         working-directory: ${{ env.KERNEL_NAME }}
-        env:
-          args: ${{ steps.generate-args.outputs.args }}
         run: |
-          echo "PATH Variable: $PATH"
-          make ${{ env.args }}
-
-      - name: "💛 Upload Image"
-        uses: actions/upload-artifact@v3
-        env:
-          arch: ${{ steps.generate-args.outputs.ARCH }}
-        with:
-          name: Image-${{ env.KERNEL_ZIP_NAME }}
-          path: ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/Image
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: "💙 Upload Image.gz"
-        uses: actions/upload-artifact@v3
-        env:
-          arch: ${{ steps.generate-args.outputs.ARCH }}
-        with:
-          name: Image.gz-${{ env.KERNEL_ZIP_NAME }}
-          path: ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/Image.gz
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: "💜 Upload dtb"
-        uses: actions/upload-artifact@v3
-        env:
-          arch: ${{ steps.generate-args.outputs.ARCH }}
-        with:
-          name: dtb-${{ env.KERNEL_DEVICE }}-${{ env.KERNEL_ZIP_NAME }}
-          path: ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/dtb.img
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: "❤️ Upload dtbo.img"
-        uses: actions/upload-artifact@v3
-        env:
-          arch: ${{ steps.generate-args.outputs.ARCH }}
-        with:
-          name: dtbo.img-${{ env.KERNEL_ZIP_NAME }}
-          path: ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/dtbo.img
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: "❤️ Pack AnyKernel3.zip"
-        if: ${{ env.useAnykernel == 'true' }}
-        env:
-          arch: ${{ steps.generate-args.outputs.ARCH }}
-          anykernel: "${{ env.WORKSPACE }}/${{ env.KERNEL_ZIP_NAME }}"
-        run: |
-          ls -al
-
-          if [ -e "${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/Image.gz" ]; then
-            cp -f ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/Image.gz ./AnyKernel3/
-          else
-            if [ -e "${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/Image" ]; then
-              cp -f ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/Image ./AnyKernel3/
-            fi
+          if [ ! -d "AnyKernel3" ]; then
+            echo "AnyKernel3 not found"
+            exit 1
           fi
-          if [ -e "${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/dtbo" ]; then
-            cp -f ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/dtbo ./AnyKernel3/
-          fi
-          if [ -e "${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/dtb.img" ]; then
-            cp -f ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/dtb.img ./AnyKernel3/
-          fi
-          if [ -e "${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/dtbo.img" ]; then
-            cp -f ${{ env.OUT_DIR }}/arch/${{ env.arch }}/boot/dtbo.img ./AnyKernel3/
-          fi
+          cd AnyKernel3
+          mkdir -p ramdisk
+          mkdir -p dlkm
 
-          cd AnyKernel3/
-          rm -rf .git
-          zip -q -r "${{ env.anykernel }}.zip" *
+          # Add ramdisk
+          cp -r $WORKSPACE/${{ env.KERNEL_NAME }}/arch/arm/boot/zImage ramdisk/
+          cp -r $WORKSPACE/${{ env.KERNEL_NAME }}/out/arch/arm/boot/zImage ramdisk/
 
-      - name: "💾 Upload AnyKernel3 image => (${{ env.builddate }})"
+          # Add DLKM files
+          cp -r $WORKSPACE/${{ env.KERNEL_NAME }}/out/dlkm/* dlkm/
+
+          # Create the zip
+          zip -r9 ${KERNEL_NAME}-${KERNEL_DEVICE}-${builddate}.zip ramdisk/* dlkm/*
+
+      - name: "🏁 Upload Kernel Zip"
         uses: actions/upload-artifact@v3
-        if: ${{ env.useAnykernel == 'true' }}
         with:
-          name: "${{ env.KERNEL_ZIP_NAME }}"
-          path: AnyKernel3/*
-
-      - name: 🧧 Create GitHub Release => (${{ env.GITHUB_RELEASE_TITLE }})
-        continue-on-error: true
-        uses: softprops/action-gh-release@v1
-        if: ${{ env.useAnykernel == 'true' && env.release == 'true' }}
-        with:
-          name: ${{ env.GITHUB_RELEASE_TITLE }}
-          body: |
-            ## Common Instructions. 
-            - Download and flash just the zip file with the name `${{ env.KERNEL_ZIP_NAME }}.zip`, other images are uploaded so people can just download those artifacts separately when needed. 
-            - If this release is marked as **pre-release**, I highly recommend you guys not use it, as it is meant for development purposes and is **not intended for daily use.** 
-            - It is a good practice to have a backup of your existing kernel [or respective partition images] using your recovery of choice or kernel manager, before flashing 3rd party kernels. 
-            - If the kernel includes Kernel SU, it'll be mentioned in the release title and kernel zip. 
-            - You can ping me, Sanjeev aka Chandler in my [Telegram group](https://t.me/chandlers_chat). While you're at it, consider subscribing to my [Telegram Channel](https://t.me/chandlers_channel) if you find value in it 😉
-            > And here is your reminder that you're doing great, just have more water and embrace good sleep ❤️ 
-          tag_name: ${{ github.run_number }}
-          prerelease: true
-          files: |
-            ${{ env.WORKSPACE }}/${{ env.KERNEL_ZIP_NAME }}.zip
-            ${{ env.WORKSPACE }}/AnyKernel3/Image.gz
-            ${{ env.WORKSPACE }}/AnyKernel3/dtb.img
-            ${{ env.WORKSPACE }}/AnyKernel3/dtbo.img
-          generate_release_notes: true
+          name: "${{ env.KERNEL_NAME }}-${{ env.KERNEL_DEVICE }}-${{ env.builddate }}.zip"
+          path: "AnyKernel3/${{ env.KERNEL_NAME }}-${{ env.KERNEL_DEVICE }}-${{ env.builddate }}.zip"
