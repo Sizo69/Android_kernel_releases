@@ -5,7 +5,21 @@
       "repo": "https://github.com/Sizo69/kernel_AstraL_mondrian.git",
       "branch": "main",
       "device": "mondrian",
-      "defconfig": "vendor/mondrian_defconfig"
+      "defconfig": "vendor/mondrian_defconfig",
+      "DLKM": {
+        "use": true,
+        "commands": [
+          "make O=out ARCH=arm64 vendor_dlkm.img"
+        ]
+      },
+      "Ramdisk": {
+        "use": true,
+        "commands": [
+          "mkbootimg --kernel out/arch/arm64/boot/Image",
+          "--ramdisk out/ramdisk.img",
+          "--output out/boot.img"
+        ]
+      }
     },
     "withKernelSU": false,
     "toolchains": [
